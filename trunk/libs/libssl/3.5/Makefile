@@ -7,7 +7,8 @@ AR = ar
 RANLIB = ranlib
 CXX = g++
 
-COPTS = $(CPUFLAGS) $(if $(CONFIG_CC_OPTIMIZE_FOR_SIZE),-Os,-O3) $(filter-out -O%, $(CFLAGS))
+COPTS = $(CPUFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections
+COPTS += $(if $(CONFIG_CC_OPTIMIZE_FOR_SIZE),-Os,-O3) $(filter-out -O%, $(CFLAGS))
 COPTS += $(if $(CONFIG_IPV6),-DOPENSSL_USE_IPV6=1,)
 COPTS += -DOPENSSL_PREFER_CHACHA_OVER_GCM
 COPTS += $(if $(CONFIG_CC_OPTIMIZE_FOR_SIZE),-DOPENSSL_SMALL_FOOTPRINT,)
@@ -15,28 +16,28 @@ COPTS += $(if $(CONFIG_CC_OPTIMIZE_FOR_SIZE),-DOPENSSL_SMALL_FOOTPRINT,)
 CFLAGS := $(COPTS)
 CXXFLAGS := $(COPTS)
 
-ifeq (,$(filter y,$(CONFIG_FIRMWARE_INCLUDE_QUIC) $(CONFIG_FIRMWARE_INCLUDE_QUIC_NGTCP2)))
-QUIC = no-quic
-endif
-
 OPENSSL_OPTIONS = no-capieng no-cms no-rfc3779 no-seed no-async no-ec2m \
                   no-err no-idea no-rc5 no-rmd160 no-blake2 no-static-engine \
                   no-md2 no-sse2 no-dso no-ts no-mdc2 no-cast no-whirlpool \
                   no-sctp no-srp no-ssl3 no-aria no-ssl3-method no-tests \
-                  no-sm2 no-sm3 no-sm4 no-afalgeng no-comp $(QUIC)
+                  no-sm2 no-sm3 no-sm4 no-afalgeng no-comp disable-dynamic-engine
+
+ifeq (,$(filter y,$(CONFIG_FIRMWARE_INCLUDE_QUIC) $(CONFIG_FIRMWARE_INCLUDE_QUIC_NGTCP2)))
+OPENSSL_OPTIONS += no-quic
+endif
 
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_TOR),y)
 OPENSSL_OPTIONS += no-threads
 endif
 
-#ifdef CONFIG_CRYPTO_DEV_LINUX
-#OPENSSL_OPTIONS += enable-devcryptoeng
-#else
-OPENSSL_OPTIONS += no-devcryptoeng
+ifdef CONFIG_CRYPTO_DEV_LINUX
+OPENSSL_OPTIONS += enable-devcryptoeng
+else
+OPENSSL_OPTIONS += no-hw no-devcryptoeng
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_TOR),y)
 OPENSSL_OPTIONS += no-engine
 endif
-#endif
+endif
 
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_SSWAN),y)
 OPENSSL_OPTIONS += no-rc2

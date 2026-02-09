@@ -2,32 +2,33 @@ SRC_NAME = openssl-1.0.2zl
 #SRC_URL  = https://packages.vmware.com/photon/3.0/photon_srpms_3.0_x86_64/openssl-1.0.2zl-1.ph3.src.rpm
 
 # openssl use CROSS_COMPILE prefix
-CC = gcc $(CPUFLAGS)
+CC = gcc
 
-COPTS += $(CFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections
+COPTS = $(CPUFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections
+COPTS += $(if $(CONFIG_CC_OPTIMIZE_FOR_SIZE),-Os,-O3) $(filter-out -O%, $(CFLAGS))
 COPTS += $(if $(CONFIG_IPV6),-DOPENSSL_USE_IPV6=1,)
 COPTS += -DOPENSSL_SMALL_FOOTPRINT
 
-OPENSSL_CIPHERS := no-capieng no-cms no-gmp no-jpake no-rfc3779 no-seed \
+OPENSSL_OPTIONS := no-capieng no-cms no-gmp no-jpake no-rfc3779 no-seed \
                   no-ec2m no-err no-idea no-rc5 no-ripemd no-rmd160 \
-                  no-static-engine no-hw no-md2 no-sse2 no-dso no-ts no-sha0 no-mdc2 no-krb5 \
+                  no-static-engine no-md2 no-sse2 no-dso no-ts no-sha0 no-mdc2 no-krb5 \
                   no-smime no-ans1 no-cast no-whirlpool no-sctp no-srp no-ssl2 no-ssl3
 
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_TOR),y)
-OPENSSL_CIPHERS += no-threads
+OPENSSL_OPTIONS += no-threads
 endif
 
 ifdef CONFIG_CRYPTO_DEV_LINUX
 COPTS += -DHAVE_CRYPTODEV
 else
-OPENSSL_CIPHERS += no-speed
+OPENSSL_OPTIONS += no-hw no-speed
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_TOR),y)
-OPENSSL_CIPHERS += no-engine
+OPENSSL_OPTIONS += no-engine
 endif
 endif
 
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_SSWAN),y)
-OPENSSL_CIPHERS += no-rc2
+OPENSSL_OPTIONS += no-rc2
 endif
 
 ifeq (,$(filter y,$(CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC) \
@@ -37,13 +38,13 @@ ifeq (,$(filter y,$(CONFIG_FIRMWARE_INCLUDE_OPENSSL_EC) \
                   $(CONFIG_FIRMWARE_INCLUDE_SFTP) \
                   $(CONFIG_FIRMWARE_INCLUDE_DOH) \
                   $(CONFIG_FIRMWARE_INCLUDE_STUBBY)))
-OPENSSL_CIPHERS += no-ec
+OPENSSL_OPTIONS += no-ec
 endif
 
 #all: download_test extract_test config_test
 all: extract_test config_test
-	$(MAKE) -j$(HOST_NCPU) -C $(SRC_NAME) depend
-	$(MAKE) -j$(HOST_NCPU) -C $(SRC_NAME)
+	$(MAKE) -C $(SRC_NAME) depend
+	$(MAKE) -C $(SRC_NAME)
 
 download_test:
 	( if [ ! -f $(SRC_NAME).tar.gz ]; then \
@@ -73,8 +74,8 @@ configure:
 		--install_prefix=$(STAGEDIR) \
 		--openssldir=/etc/ssl \
 		$(COPTS) \
-		$(OPENSSL_CIPHERS); \
-	cd ./include/openssl && ln -fs ../../crypto/ts/ts.h ts.h; \
+		$(OPENSSL_OPTIONS); \
+	cd ./include/openssl && ln -fs ../../crypto/ts/ts.h .; \
 	)
 
 clean:

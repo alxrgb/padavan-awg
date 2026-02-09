@@ -1,4 +1,6 @@
-# patches: http://security.debian.org/debian-security/pool/updates/main/o/openssl/openssl_1.1.1w-0+deb11u4.debian.tar.xz
+# patches:
+# https://mirrors.slackware.com/slackware/slackware-15.0/patches/source/openssl
+# https://github.com/kzalewski/openssl-1.1.1
 
 SRC_NAME = openssl-1.1.1w
 SRC_URL = https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
@@ -9,35 +11,33 @@ AR = ar
 RANLIB = ranlib
 CXX = g++
 
-COPTS = $(CPUFLAGS)
+COPTS = $(CPUFLAGS) -ffunction-sections -fdata-sections -Wl,--gc-sections
 COPTS += $(if $(CONFIG_CC_OPTIMIZE_FOR_SIZE),-Os,-O3) $(filter-out -O%, $(CFLAGS))
 COPTS += $(if $(CONFIG_IPV6),-DOPENSSL_USE_IPV6=1,)
-COPTS += -DOPENSSL_PREFER_CHACHA_OVER_GCM
 COPTS += $(if $(CONFIG_CC_OPTIMIZE_FOR_SIZE),-DOPENSSL_SMALL_FOOTPRINT,)
+COPTS += -DOPENSSL_PREFER_CHACHA_OVER_GCM
 
 CFLAGS := $(COPTS)
 CXXFLAGS := $(COPTS)
-
-#LOPTS=-Wl,--gc-sections -L$(DESTDIR)/lib
 
 OPENSSL_OPTIONS = no-capieng no-cms no-rfc3779 no-seed no-async \
                   no-ec2m no-err no-idea no-rc5 no-rmd160 no-blake2 \
                   no-static-engine no-hw-padlock no-md2 no-sse2 no-dso no-ts no-mdc2 \
                   no-cast no-whirlpool no-sctp no-srp no-ssl3 \
-                  no-aria no-sm2 no-sm3 no-sm4
+                  no-aria no-sm2 no-sm3 no-sm4 no-afalgeng disable-dynamic-engine
 
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_TOR),y)
 OPENSSL_OPTIONS += no-threads
 endif
 
-#ifdef CONFIG_CRYPTO_DEV_LINUX
-#OPENSSL_OPTIONS += enable-devcryptoeng
-#else
+ifdef CONFIG_CRYPTO_DEV_LINUX
+OPENSSL_OPTIONS += enable-devcryptoeng
+else
 OPENSSL_OPTIONS += no-hw no-devcryptoeng
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_TOR),y)
 OPENSSL_OPTIONS += no-engine
 endif
-#endif
+endif
 
 ifneq ($(CONFIG_FIRMWARE_INCLUDE_SSWAN),y)
 OPENSSL_OPTIONS += no-rc2
