@@ -16,9 +16,8 @@ export CONFIG_TOOLCHAIN_DIR="${ROOTDIR}/../toolchain/out"
 kernel_id="3.4.x"
 kernel_cf=""
 kernel_tf=""
-busybox_id="1.3X.X"
 busybox_cf="$ROOTDIR/configs/boards/busybox.config"
-busybox_tf="$ROOTDIR/user/busybox/busybox-${busybox_id}/.config"
+busybox_tf="$ROOTDIR/stage/busybox.config"
 board_h=""
 board_mk=""
 paragon_hfsplus=0
@@ -123,6 +122,7 @@ rm -rf $ROOTDIR/romfs
 rm -rf $ROOTDIR/images
 mkdir -p $ROOTDIR/romfs
 mkdir -p $ROOTDIR/images
+mkdir -p $ROOTDIR/stage
 
 # load source kernel config
 . "$kernel_cf"
