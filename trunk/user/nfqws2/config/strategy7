@@ -9,7 +9,8 @@
 --lua-desync=fake:blob=fake_default_tls:tls_mod=rnd,dupsid,sni=yandex.net:tcp_seq=10000
 --lua-desync=multisplit:pos=1,midsld:seqovl=831:seqovl_pattern=tls_google:tcp_ack=-66000:tcp_ts_up
 --payload=http_req
---lua-desync=hostfakesplit:tcp_md5:tcp_ts_up
+--lua-desync=hostfakesplit:tcp_md5:badsum
+#:ip_id=zero
 
 ### quic
 --new --filter-udp=443 --filter-l7=quic <HOSTLIST_NOAUTO>
